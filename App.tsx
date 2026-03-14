@@ -71,8 +71,8 @@ const initialZonePrompts: ZonePrompts = {
 
 const RATIO_GROUPS = {
     Square: ["1:1"],
-    Portrait: ["4:5", "3:4", "2:3", "9:16", "9:21", "1:2", "10:16", "1:2.35", "1:2.39", "1:3", "4:7"],
-    Landscape: ["5:4", "4:3", "3:2", "16:9", "21:9", "2:1", "16:10", "2.35:1", "2.39:1", "3:1"]
+    Portrait: ["4:5", "3:4", "2:3", "9:16", "9:21", "1:2", "10:16", "1:2.35", "1:2.39", "1:3", "4:7", "1:4", "1:8"],
+    Landscape: ["5:4", "4:3", "3:2", "16:9", "21:9", "2:1", "16:10", "2.35:1", "2.39:1", "3:1", "4:1", "8:1"]
 };
 
 export default function App() {
@@ -94,7 +94,7 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [isRepositoryModalOpen, setIsRepositoryModalOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget>('avatar');
-  const [imageModel, setImageModel] = useState<ImageModel>('gemini-2.5-flash-image');
+  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3.1-flash-image-preview');
   const [safetyLevel, setSafetyLevel] = useState<SafetyLevel>('BLOCK_MEDIUM_AND_ABOVE');
   const [resolution, setResolution] = useState<ImageResolution>('1K');
   const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>('1:1');
@@ -346,15 +346,27 @@ export default function App() {
     if (camItems.length > 0) techParts.push(`[CAMERA]: ${camItems.join(', ')}`);
 
     const comp = config.composition;
-    const compItems = [fmt(comp.shotType), fmt(comp.angle), fmt(comp.focus), fmt(comp.orientation)].filter(Boolean);
-    if (compItems.length > 0) techParts.push(`[COMPOSITION]: ${compItems.join(', ')}`);
+    const compItems = [
+        fmt(comp.shotType), 
+        comp.camera3D.enabled ? null : fmt(comp.angle), // Skip manual angle if 3D is active
+        fmt(comp.focus), 
+        fmt(comp.orientation)
+    ].filter(Boolean);
+    
+    if (compItems.length > 0) {
+        techParts.push(`[COMPOSITION]: Apply framing to Input 0: ${compItems.join(', ')}`);
+    }
 
     const sty = config.style;
     const styItems = [fmt(sty.genre), fmt(sty.aesthetic)].filter(Boolean);
     if (styItems.length > 0) techParts.push(`[AESTHETIC]: ${styItems.join(', ')}`);
 
     if (comp.camera3D.enabled) {
-        techParts.push(`[STAGE POV]: AZ=${comp.camera3D.azimuth}°, EL=${comp.camera3D.elevation}°, ZOOM=${comp.camera3D.distance}x, OBJ_ROT=${comp.camera3D.objectRotation}°, L_AZ=${comp.camera3D.lightAzimuth}°`);
+        techParts.push(`[3D STAGE CONFIGURATION]: Apply spatial transformations to Input 0. 
+        - CAMERA ORIENTATION: Azimuth=${comp.camera3D.azimuth}°, Elevation=${comp.camera3D.elevation}°.
+        - OPTICAL ZOOM: ${comp.camera3D.distance}x magnification.
+        - SUBJECT ROTATION: Rotate the primary subject in Input 0 by ${comp.camera3D.objectRotation}° relative to its original pose.
+        - LIGHTING VECTOR: Key light source positioned at Azimuth=${comp.camera3D.lightAzimuth}°.`);
     }
 
     if (techParts.length > 0) parts.push(`--- TECHNICAL SPECIFICATION ---\n${techParts.join('\n')}`);
@@ -842,8 +854,9 @@ export default function App() {
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest pl-1">Neural Core</span>
                                     <div className="flex bg-gray-100 dark:bg-black/30 p-1 rounded-lg border-[0.5px] border-gray-200 dark:border-white/5">
-                                        <button onClick={() => setImageModel('gemini-2.5-flash-image')} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-2.5-flash-image' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Flash</button>
-                                        <button onClick={async () => { setImageModel('gemini-3-pro-image-preview'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3-pro-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro</button>
+                                        <button onClick={() => { setImageModel('gemini-2.5-flash-image'); if (resolution === '512px') setResolution('1K'); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-2.5-flash-image' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Flash</button>
+                                        <button onClick={async () => { setImageModel('gemini-3-pro-image-preview'); if (resolution === '512px') setResolution('1K'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3-pro-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro</button>
+                                        <button onClick={async () => { setImageModel('gemini-3.1-flash-image-preview'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3.1-flash-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro 2</button>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -865,12 +878,15 @@ export default function App() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className={`flex flex-col gap-2 transition-all duration-500 ${imageModel === 'gemini-3-pro-image-preview' ? 'opacity-100 translate-y-0' : 'opacity-20 translate-y-1 pointer-events-none'}`}>
+                                <div className={`flex flex-col gap-2 transition-all duration-500 ${imageModel === 'gemini-3-pro-image-preview' || imageModel === 'gemini-3.1-flash-image-preview' ? 'opacity-100 translate-y-0' : 'opacity-20 translate-y-1 pointer-events-none'}`}>
                                     <span className="text-[9px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest pl-1">Scale Protocol</span>
                                     <div className="flex bg-gray-100 dark:bg-black/30 p-1 rounded-md border-[0.5px] border-gray-200 dark:border-white/5 shadow-inner">
                                         <button onClick={() => setResolution('1K')} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${resolution === '1K' ? 'bg-white dark:bg-white/10 text-brand-red shadow-lg ring-1 ring-black/5 dark:ring-white/5' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>1K</button>
                                         <button onClick={() => setResolution('2K')} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${resolution === '2K' ? 'bg-white dark:bg-white/10 text-brand-red shadow-lg ring-1 ring-black/5 dark:ring-white/5' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>2K</button>
                                         <button onClick={() => setResolution('4K')} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${resolution === '4K' ? 'bg-white dark:bg-white/10 text-brand-red shadow-lg ring-1 ring-black/5 dark:ring-white/5' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>4K</button>
+                                        {imageModel === 'gemini-3.1-flash-image-preview' && (
+                                            <button onClick={() => setResolution('512px' as any)} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${resolution === '512px' as any ? 'bg-white dark:bg-white/10 text-brand-red shadow-lg ring-1 ring-black/5 dark:ring-white/5' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>512px</button>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">

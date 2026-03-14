@@ -12,10 +12,10 @@ export interface MarkupEntry {
     timestamp: number;
 }
 
-export type ImageModel = 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview';
+export type ImageModel = 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview' | 'gemini-3.1-flash-image-preview';
 export type SafetyLevel = 'BLOCK_LOW_AND_ABOVE' | 'BLOCK_MEDIUM_AND_ABOVE' | 'BLOCK_ONLY_HIGH' | 'BLOCK_NONE';
-export type ImageResolution = '1K' | '2K' | '4K';
-export type AspectRatioOption = '1:1' | '4:5' | '5:4' | '3:4' | '4:3' | '2:3' | '3:2' | '9:16' | '16:9' | '9:21' | '21:9' | '1:2' | '2:1' | '10:16' | '16:10' | '2.35:1' | '1:2.35' | '2.39:1' | '1:2.39' | '3:1' | '1:3' | '4:7';
+export type ImageResolution = '512px' | '1K' | '2K' | '4K';
+export type AspectRatioOption = '1:1' | '4:5' | '5:4' | '3:4' | '4:3' | '2:3' | '3:2' | '9:16' | '16:9' | '9:21' | '21:9' | '1:2' | '2:1' | '10:16' | '16:10' | '2.35:1' | '1:2.35' | '2.39:1' | '1:2.39' | '3:1' | '1:3' | '4:7' | '1:4' | '4:1' | '1:8' | '8:1';
 
 export enum AppMode {
   CREATE = 'edit',
@@ -223,4 +223,13 @@ export interface RealismConfig {
 export interface GeneratedPromptResponse {
     mainPrompt: string;
     config: PromptConfig;
+}
+
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
 }
