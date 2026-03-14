@@ -262,13 +262,16 @@ export async function generatePromptConfiguration(mainImage: ImageFile | null, r
             parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
         });
 
-        const response = await ai.models.generateContent({ 
-            model: 'gemini-3-flash-preview', 
-            contents: { parts }, 
-            config: { 
-                responseMimeType: 'application/json' 
-            } 
-        });
+       const response = await ai.models.generateContent({ 
+    // 1. Force the newest March 2026 Pro ID
+    model: 'gemini-3.1-pro-image-preview', 
+    contents: { parts }, 
+    config: {
+        ...config,
+        // 2. Disable silent "Flash" redirection
+        fallbackModels: [] 
+    } 
+});
 
         const json = JSON.parse(response.text || '{}');
         const sanitizeField = (f: any) => ({ 
