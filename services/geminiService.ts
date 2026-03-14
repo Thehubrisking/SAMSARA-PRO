@@ -170,10 +170,10 @@ export async function styleAvatarWithGemini(
             config 
         });
 
-        return extractResponse(response);
-    } catch (error) { 
-        handleApiError(error); 
-        return { editedImage: null, textResponse: 'Error' }; 
+    return { 
+    editedImage: output, 
+    textResponse: null, 
+    debug: "v3.1-PRO-FORCE-ACTIVE" // Add this line
     }
 }
 
