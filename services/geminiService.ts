@@ -4,10 +4,9 @@ import type { Part } from "@google/genai";
 import type { ImageFile, ImageModel, SafetyLevel, ImageResolution, GeneratedPromptResponse, AspectRatioOption } from "../types";
 
 const getAiClient = () => {
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
-    
+    const API_KEY = process.env.API_KEY;
     if (!API_KEY) {
-        throw new Error("VITE_GEMINI_API_KEY environment variable not set");
+        throw new Error("API_KEY environment variable not set");
     }
     return new GoogleGenAI({ apiKey: API_KEY });
 };
@@ -144,6 +143,7 @@ export async function styleAvatarWithGemini(
         const parts: Part[] = [];
         
         // Input 0: The Target
+        if (!avatar?.dataUrl) throw new Error("Avatar dataUrl is missing");
         parts.push({ inlineData: { data: avatar.dataUrl.split(',')[1], mimeType: avatar.mimeType } });
         
         // Input 1: Optional Mask
@@ -153,7 +153,9 @@ export async function styleAvatarWithGemini(
 
         // Subsequent Inputs: References
         referenceImages.forEach(ref => {
-            parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
+            if (ref?.dataUrl) {
+                parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
+            }
         });
 
         const spatialInstructions = getSpatialHeader(!!avatar.maskDataUrl);
@@ -203,6 +205,7 @@ export async function editImageWithGemini(
     const parts: Part[] = [];
     
     // Input 0
+    if (!base64ImageData) throw new Error("Base image data is missing");
     parts.push({ inlineData: { data: base64ImageData, mimeType } });
     
     // Input 1
@@ -212,26 +215,24 @@ export async function editImageWithGemini(
 
     // Subsequent
     referenceImages.forEach(ref => {
-        parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
+        if (ref?.dataUrl) {
+            parts.push({ inlineData: { data: ref.dataUrl.split(',')[1] || ref.dataUrl, mimeType: ref.mimeType } });
+        }
     });
     
     const spatialInstructions = getSpatialHeader(!!base64MaskData);
     parts.push({ text: `${spatialInstructions}\n\nUSER INSTRUCTION: ${prompt}` });
 
-   const config: any = {
+    const config: any = {
         safetySettings: getSafetySettings(safetyLevel),
         imageConfig: {
-            aspectRatio: mapAspectRatio(aspectRatio, model),
-            // This ensures the custom resolution is applied
-            imageSize: resolution 
-        },
-        // THE "ANTI-FLASH" GUARD:
-        // This stops Google from silently switching to Flash if Pro is busy.
-        fallbackModels: [] 
+            aspectRatio: mapAspectRatio(aspectRatio, model)
+        }
     };
 
-    // No need for the extra 'if' block here if resolution is already set above.
-    // The Gemini 3.1 SDK handles the resolution within the imageConfig.
+    if (model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') {
+        config.imageConfig.imageSize = resolution;
+    }
 
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
     
@@ -266,12 +267,14 @@ export async function generatePromptConfiguration(mainImage: ImageFile | null, r
         }
         Return JSON ONLY. No markdown.` }];
         
-        if (mainImage) {
-            parts.push({ inlineData: { data: mainImage.dataUrl.split(',')[1], mimeType: mainImage.mimeType } });
+        if (mainImage?.dataUrl) {
+            parts.push({ inlineData: { data: mainImage.dataUrl.split(',')[1] || mainImage.dataUrl, mimeType: mainImage.mimeType } });
         }
         
         referenceImages.slice(0, 3).forEach(ref => {
-            parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
+            if (ref?.dataUrl) {
+                parts.push({ inlineData: { data: ref.dataUrl.split(',')[1] || ref.dataUrl, mimeType: ref.mimeType } });
+            }
         });
 
         const response = await ai.models.generateContent({ 
