@@ -3,10 +3,10 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import type { Part } from "@google/genai";
 import type { ImageFile, ImageModel, SafetyLevel, ImageResolution, GeneratedPromptResponse, AspectRatioOption } from "../types";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
-    
+const getAiClient = () => {
+    const API_KEY = process.env.API_KEY;
     if (!API_KEY) {
-        throw new Error("VITE_GEMINI_API_KEY environment variable not set");
+        throw new Error("API_KEY environment variable not set");
     }
     return new GoogleGenAI({ apiKey: API_KEY });
 };
