@@ -1,6 +1,6 @@
 # SAMSARA Documentation
 
-**SAMSARA** is a cutting-edge AI-powered photo editing application built with React, TypeScript, and the Google Gemini API. It leverages the "Nano Banana" (Gemini 2.5 Flash) and "Nano Banana Pro" (Gemini 3.0 Pro Image) models to provide advanced image manipulation capabilities, including inpainting, style transfer, and scene remixing.
+**SAMSARA** is a cutting-edge AI-powered photo editing application built with React, TypeScript, and the Google Gemini API. It leverages the "Nano Banana Pro" (Gemini 3.0 Pro Image) and "Nano Banana Pro 2" (Gemini 3.1 Flash Image) models to provide advanced image manipulation capabilities, including inpainting, style transfer, and scene remixing.
 
 ---
 
@@ -24,7 +24,7 @@
 *   **AI Inpainting:** Intelligently modify specific parts of an image using a brush mask and text prompt.
 *   **Style Transfer:** Apply the aesthetic, lighting, and texture of reference images to a target avatar.
 *   **Scene Remix:** Insert objects into scenes with context-aware blending and lighting.
-*   **Dual Model Support:** Switch between `Flash` (Fast/Free) and `Pro` (High-Res/Paid) models.
+*   **Dual Model Support:** Switch between `Pro` (High-Res) and `Pro 2` (Next-Gen) models.
 *   **Advanced Editing Tools:** 
     *   Brush/Eraser masking with adjustable size.
     *   Lasso and Rectangle selection tools.
@@ -150,12 +150,12 @@ Click the **Library** button in Style Transfer mode to access pre-loaded high-qu
 
 ### Models
 
-*   **Nano Banana (Flash)** (`gemini-2.5-flash-image`):
-    *   Fast, efficient, lower cost.
-    *   Best for rapid iteration.
 *   **Nano Banana (Pro)** (`gemini-3-pro-image-preview`):
     *   High fidelity, supports native 2K/4K output.
     *   **Requirement:** Users must select a paid project API key via the `window.aistudio` interface.
+*   **Nano Banana (Pro 2)** (`gemini-3.1-flash-image-preview`):
+    *   Next-generation architecture, ultra-high fidelity.
+    *   Supports advanced aspect ratios and 4K output.
 
 ### Advanced Settings
 
@@ -170,7 +170,7 @@ Located in the collapsible panel above the generate button:
 
 | Issue | Possible Cause | Solution |
 | :--- | :--- | :--- |
-| **"Permission denied" / 403** | Using Pro model with free key. | Switch to Flash model or select a paid API key in the dialog. |
+| **"Permission denied" / 403** | Using Pro model with free key. | Ensure you have selected a paid API key in the dialog. |
 | **"Failed to load library image"** | CORS restriction. | The app uses a proxy canvas method. Ensure the source URL allows cross-origin access (Unsplash is safe). |
 | **Image is black/empty** | Safety filter triggered. | Check "Advanced Settings" and lower the Safety Filter level. |
 | **Canvas drawing is offset** | Browser zoom level. | Ensure browser zoom is 100% or refresh the page to recalibrate canvas coordinates. |

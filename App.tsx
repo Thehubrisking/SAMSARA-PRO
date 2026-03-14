@@ -94,7 +94,7 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [isRepositoryModalOpen, setIsRepositoryModalOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget>('avatar');
-  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3.1-flash-image-preview');
+  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3-pro-image-preview');
   const [safetyLevel, setSafetyLevel] = useState<SafetyLevel>('BLOCK_MEDIUM_AND_ABOVE');
   const [resolution, setResolution] = useState<ImageResolution>('1K');
   const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>('1:1');
@@ -424,7 +424,8 @@ export default function App() {
     const finalPrompt = constructFullPrompt(prompt, promptConfig, zonePrompts, identityConfig, garmentConfig, poseLockConfig, sceneLockConfig, realismConfig, basePool.length);
     const seed = curationSeed ? parseInt(curationSeed) : Math.floor(Math.random() * 2147483647);
 
-    const targetImage = (editSubMode === 'mask') ? originalImage : masterSourceImage!;
+    const targetImage = (editSubMode === 'mask') ? originalImage : masterSourceImage;
+    if (!targetImage) { setError("Please upload an image first."); return; }
     const targetMask = (editSubMode === 'mask') ? maskImage : null;
     
     const effectiveRefs = getEffectiveReferences(basePool);
@@ -452,7 +453,7 @@ export default function App() {
   }, [originalImage, masterSourceImage, maskImage, editSubMode, prompt, promptConfig, zonePrompts, identityConfig, garmentConfig, poseLockConfig, sceneLockConfig, realismConfig, imageModel, safetyLevel, resolution, constructFullPrompt, curationSeed, aspectRatio, editReferenceImages, isAdvancedUploads, advancedRefs, structureImage, textureImage, garmentImages, poseLockImage, sceneLockImage]);
 
   const handleSubmit = async () => {
-    if (imageModel === 'gemini-3-pro-image-preview') await ensureApiKey();
+    await ensureApiKey();
     if (mode === 'edit') handleInpaintingEdit();
     else if (mode === 'style') handleStyleTransfer();
   };
@@ -618,7 +619,16 @@ export default function App() {
         if (state.poseLockConfig) setPoseLockConfig(state.poseLockConfig);
         if (state.sceneLockConfig) setSceneLockConfig(state.sceneLockConfig);
         if (state.realismConfig) setRealismConfig(state.realismConfig);
-        if (state.originalImage) setOriginalImage(state.originalImage);
+        if (state.originalImage) {
+          setOriginalImage(state.originalImage);
+          setMasterSourceImage(state.originalImage);
+          setMarkupHistory([{
+            id: Date.now(),
+            image: state.originalImage,
+            mask: null,
+            timestamp: Date.now()
+          }]);
+        }
         if (state.avatarImage) setAvatarImage(state.avatarImage);
         if (state.referenceImages) {
           if (state.mode === 'edit') setEditReferenceImages(state.referenceImages);
@@ -794,7 +804,14 @@ export default function App() {
                                     {avatarImage ? <img src={avatarImage.dataUrl} className="w-full h-full object-contain p-0 opacity-40 grayscale-[0.8]" alt="Source" /> : <div className="opacity-5 uppercase tracking-[1em] text-[10px] font-medium p-4 text-center">Identity Not Set</div>}
                                 </div>
                                 <div className="relative flex items-center justify-center bg-black/5 overflow-hidden border-t md:border-t-0 md:border-l-[0.5px] border-dark-text/5 dark:border-white/5 min-h-[40vh] md:min-h-0">
-                                    <ImageDisplay originalImageUrl={null} editedImageUrl={editedImage} avatarUrl={avatarImage?.dataUrl} referenceImages={referenceImages.map(img => img.dataUrl)} onImageClick={(url) => setZoomedInfo({ url })} onImageEdit={handleCommit} />
+                                    <ImageDisplay 
+          originalImageUrl={null} 
+          editedImageUrl={editedImage} 
+          avatarUrl={avatarImage?.dataUrl} 
+          referenceImages={referenceImages.map(img => img?.dataUrl).filter(Boolean) as string[]} 
+          onImageClick={(url) => setZoomedInfo({ url })} 
+          onImageEdit={handleCommit} 
+        />
                                     {!editedImage && !isLoading && <div className="text-center opacity-5 p-4"><p className="text-[6vw] md:text-[3vw] font-light uppercase tracking-[2em] text-dark-text dark:text-white">Visualizing</p></div>}
                                 </div>
                             </div>
@@ -854,7 +871,6 @@ export default function App() {
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest pl-1">Neural Core</span>
                                     <div className="flex bg-gray-100 dark:bg-black/30 p-1 rounded-lg border-[0.5px] border-gray-200 dark:border-white/5">
-                                        <button onClick={() => { setImageModel('gemini-2.5-flash-image'); if (resolution === '512px') setResolution('1K'); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-2.5-flash-image' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Flash</button>
                                         <button onClick={async () => { setImageModel('gemini-3-pro-image-preview'); if (resolution === '512px') setResolution('1K'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3-pro-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro</button>
                                         <button onClick={async () => { setImageModel('gemini-3.1-flash-image-preview'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3.1-flash-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro 2</button>
                                     </div>
@@ -878,7 +894,7 @@ export default function App() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className={`flex flex-col gap-2 transition-all duration-500 ${imageModel === 'gemini-3-pro-image-preview' || imageModel === 'gemini-3.1-flash-image-preview' ? 'opacity-100 translate-y-0' : 'opacity-20 translate-y-1 pointer-events-none'}`}>
+                                <div className="flex flex-col gap-2 transition-all duration-500 opacity-100 translate-y-0">
                                     <span className="text-[9px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest pl-1">Scale Protocol</span>
                                     <div className="flex bg-gray-100 dark:bg-black/30 p-1 rounded-md border-[0.5px] border-gray-200 dark:border-white/5 shadow-inner">
                                         <button onClick={() => setResolution('1K')} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${resolution === '1K' ? 'bg-white dark:bg-white/10 text-brand-red shadow-lg ring-1 ring-black/5 dark:ring-white/5' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>1K</button>
