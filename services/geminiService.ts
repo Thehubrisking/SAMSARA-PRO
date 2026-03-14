@@ -4,7 +4,7 @@ import type { Part } from "@google/genai";
 import type { ImageFile, ImageModel, SafetyLevel, ImageResolution, GeneratedPromptResponse, AspectRatioOption } from "../types";
 
 const getAiClient = () => {
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;;
+    const API_KEY = process.env.API_KEY;
     if (!API_KEY) {
         throw new Error("API_KEY environment variable not set");
     }
@@ -79,28 +79,35 @@ const getSafetySettings = (level: SafetyLevel) => [
     { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: level }
 ];
 
-const mapAspectRatio = (ratio: string): "1:1" | "3:4" | "4:3" | "9:16" | "16:9" => {
-    const supported = {
+const mapAspectRatio = (ratio: string, model?: ImageModel): string => {
+    const supported: Record<string, number> = {
         "9:16": 0.5625,
         "3:4": 0.75,
         "1:1": 1.0,
         "4:3": 1.3333,
         "16:9": 1.7777
     };
+
+    if (model === 'gemini-3.1-flash-image-preview') {
+        supported["1:4"] = 0.25;
+        supported["1:8"] = 0.125;
+        supported["4:1"] = 4.0;
+        supported["8:1"] = 8.0;
+    }
     
     try {
         const [w, h] = ratio.split(':').map(Number);
         if (!w || !h) return "1:1";
         const val = w / h;
         
-        let bestKey: "1:1" | "3:4" | "4:3" | "9:16" | "16:9" = "1:1";
+        let bestKey = "1:1";
         let minDiff = Infinity;
         
         for (const [key, sVal] of Object.entries(supported)) {
             const diff = Math.abs(val - sVal);
             if (diff < minDiff) {
                 minDiff = diff;
-                bestKey = key as any;
+                bestKey = key;
             }
         }
         return bestKey;
@@ -154,11 +161,11 @@ export async function styleAvatarWithGemini(
         const config: any = {
             safetySettings: getSafetySettings(safetyLevel),
             imageConfig: {
-                aspectRatio: mapAspectRatio(aspectRatio)
+                aspectRatio: mapAspectRatio(aspectRatio, model)
             }
         };
 
-        if (model === 'gemini-3-pro-image-preview') {
+        if (model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') {
             config.imageConfig.imageSize = resolution;
         }
 
@@ -170,10 +177,10 @@ export async function styleAvatarWithGemini(
             config 
         });
 
-    return { 
-    editedImage: output, 
-    textResponse: null, 
-    debug: "v3.1-PRO-FORCE-ACTIVE" // Add this line
+        return extractResponse(response);
+    } catch (error) { 
+        handleApiError(error); 
+        return { editedImage: null, textResponse: 'Error' }; 
     }
 }
 
@@ -213,16 +220,18 @@ export async function editImageWithGemini(
     const config: any = {
         safetySettings: getSafetySettings(safetyLevel),
         imageConfig: {
-            aspectRatio: mapAspectRatio(aspectRatio)
+            aspectRatio: mapAspectRatio(aspectRatio, model)
         }
-  
-    if (model === 'gemini-3-pro-image-preview') {
+    };
+
+    if (model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') {
         config.imageConfig.imageSize = resolution;
-      },
-            // THIS IS THE FIX: It tells Google "Pro or nothing."
-            // Without this, Google silently switches you to Flash.
+        },
+            // ADD THIS LINE: It forces the API to fail if Pro isn't available
+            // instead of silently switching to Flash.
             fallbackModels: [] 
         };
+    }
 
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
     
@@ -232,20 +241,10 @@ export async function editImageWithGemini(
         config 
     });
 
-    const response = await ai.models.generateContent({ 
-            model: 'gemini-3.1-pro-image-preview', 
-            contents: { parts }, 
-            config 
-        });
-
-        return extractResponse(response);
-    } catch (error) { 
-        handleApiError(error); 
-        return { editedImage: null, textResponse: 'Error' }; 
-    }
-} // <--- Check this one!
-
-export async function editImageWithGemini( ... ) 
+    return extractResponse(response);
+  } catch (error) { 
+      handleApiError(error); 
+      return { editedImage: null, textResponse: 'Error' }; 
   }
 }
 
@@ -275,23 +274,13 @@ export async function generatePromptConfiguration(mainImage: ImageFile | null, r
             parts.push({ inlineData: { data: ref.dataUrl.split(',')[1], mimeType: ref.mimeType } });
         });
 
-       const response = await ai.models.generateContent({ 
-    // 1. Force the newest March 2026 Pro ID
-    model: 'gemini-3.1-pro-image-preview', 
-    contents: { parts }, 
-    config: {
-        ...config,
-        // 2. Disable silent "Flash" redirection
-        fallbackModels: [] 
-        return extractResponse(response);
-    } catch (error) { 
-        handleApiError(error); 
-        return { editedImage: null, textResponse: 'Error' }; 
-    }
-} // <--- Check this one!
-        
-    } 
-});
+        const response = await ai.models.generateContent({ 
+            model: 'gemini-3-flash-preview', 
+            contents: { parts }, 
+            config: { 
+                responseMimeType: 'application/json' 
+            } 
+        });
 
         const json = JSON.parse(response.text || '{}');
         const sanitizeField = (f: any) => ({ 
