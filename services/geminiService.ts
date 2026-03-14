@@ -217,21 +217,20 @@ export async function editImageWithGemini(
     const spatialInstructions = getSpatialHeader(!!base64MaskData);
     parts.push({ text: `${spatialInstructions}\n\nUSER INSTRUCTION: ${prompt}` });
 
-    const config: any = {
+   const config: any = {
         safetySettings: getSafetySettings(safetyLevel),
         imageConfig: {
-            aspectRatio: mapAspectRatio(aspectRatio, model)
-        }
+            aspectRatio: mapAspectRatio(aspectRatio, model),
+            // This ensures the custom resolution is applied
+            imageSize: resolution 
+        },
+        // THE "ANTI-FLASH" GUARD:
+        // This stops Google from silently switching to Flash if Pro is busy.
+        fallbackModels: [] 
     };
 
-    if (model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') {
-        config.imageConfig.imageSize = resolution;
-        },
-            // ADD THIS LINE: It forces the API to fail if Pro isn't available
-            // instead of silently switching to Flash.
-            fallbackModels: [] 
-        };
-    }
+    // No need for the extra 'if' block here if resolution is already set above.
+    // The Gemini 3.1 SDK handles the resolution within the imageConfig.
 
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
     
