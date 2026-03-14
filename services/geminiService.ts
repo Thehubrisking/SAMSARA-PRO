@@ -215,13 +215,14 @@ export async function editImageWithGemini(
         imageConfig: {
             aspectRatio: mapAspectRatio(aspectRatio)
         }
-        fallbackModels: [] 
-        };
-    };
-
+  
     if (model === 'gemini-3-pro-image-preview') {
         config.imageConfig.imageSize = resolution;
-    }
+      },
+            // THIS IS THE FIX: It tells Google "Pro or nothing."
+            // Without this, Google silently switches you to Flash.
+            fallbackModels: [] 
+        };
 
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
     
