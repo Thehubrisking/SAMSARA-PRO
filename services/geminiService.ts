@@ -226,12 +226,13 @@ export async function editImageWithGemini(
 
     if (model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') {
         config.imageConfig.imageSize = resolution;
-    }
-},
+        },
             // ADD THIS LINE: It forces the API to fail if Pro isn't available
             // instead of silently switching to Flash.
             fallbackModels: [] 
         };
+    }
+
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
     
     const response = await ai.models.generateContent({ 
