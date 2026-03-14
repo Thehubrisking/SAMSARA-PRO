@@ -1,6 +1,6 @@
 # SAMSARA Documentation
 
-**SAMSARA** is a cutting-edge AI-powered photo editing application built with React, TypeScript, and the Google Gemini API. It leverages the "Nano Banana" (Gemini 2.5 Flash), "Nano Banana Pro" (Gemini 3.0 Pro Image), and "Nano Banana 2" (Gemini 3.1 Flash Image) models to provide advanced image manipulation capabilities, including inpainting, style transfer, and scene remixing.
+**SAMSARA** is a cutting-edge AI-powered photo editing application built with React, TypeScript, and the Google Gemini API. It leverages the "Nano Banana" (Gemini 2.5 Flash) and "Nano Banana Pro" (Gemini 3.0 Pro Image) models to provide advanced image manipulation capabilities, including inpainting, style transfer, and scene remixing.
 
 ---
 
@@ -151,12 +151,11 @@ Click the **Library** button in Style Transfer mode to access pre-loaded high-qu
 ### Models
 
 *   **Nano Banana (Flash)** (`gemini-2.5-flash-image`):
-    *   The original "viral" model. Fast, but lacks 4K and advanced 3.1 reasoning.
-*   **Nano Banana Pro (Pro)** (`gemini-3-pro-image-preview`):
-    *   Professional 4K assets, complex text rendering, and high-fidelity reasoning.
-*   **Nano Banana 2 (Pro 2)** (`gemini-3.1-flash-image-preview`):
-    *   Speed, high-volume editing, and wide aspect ratios (up to 8:1). Supports 4K.
-    *   **Note:** This is the default model for SAMSARA pro 2.
+    *   Fast, efficient, lower cost.
+    *   Best for rapid iteration.
+*   **Nano Banana (Pro)** (`gemini-3-pro-image-preview`):
+    *   High fidelity, supports native 2K/4K output.
+    *   **Requirement:** Users must select a paid project API key via the `window.aistudio` interface.
 
 ### Advanced Settings
 

@@ -94,7 +94,7 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [isRepositoryModalOpen, setIsRepositoryModalOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget>('avatar');
-  const [imageModel, setImageModel] = useState<ImageModel>('gemini-2.5-flash-image');
+  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3.1-flash-image-preview');
   const [safetyLevel, setSafetyLevel] = useState<SafetyLevel>('BLOCK_MEDIUM_AND_ABOVE');
   const [resolution, setResolution] = useState<ImageResolution>('1K');
   const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>('1:1');
@@ -452,7 +452,7 @@ export default function App() {
   }, [originalImage, masterSourceImage, maskImage, editSubMode, prompt, promptConfig, zonePrompts, identityConfig, garmentConfig, poseLockConfig, sceneLockConfig, realismConfig, imageModel, safetyLevel, resolution, constructFullPrompt, curationSeed, aspectRatio, editReferenceImages, isAdvancedUploads, advancedRefs, structureImage, textureImage, garmentImages, poseLockImage, sceneLockImage]);
 
   const handleSubmit = async () => {
-    if (imageModel === 'gemini-3-pro-image-preview' || imageModel === 'gemini-3.1-flash-image-preview') await ensureApiKey();
+    if (imageModel === 'gemini-3-pro-image-preview') await ensureApiKey();
     if (mode === 'edit') handleInpaintingEdit();
     else if (mode === 'style') handleStyleTransfer();
   };
