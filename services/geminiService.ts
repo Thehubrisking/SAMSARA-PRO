@@ -229,10 +229,20 @@ export async function editImageWithGemini(
         config 
     });
 
-    return extractResponse(response);
-  } catch (error) { 
-      handleApiError(error); 
-      return { editedImage: null, textResponse: 'Error' }; 
+    const response = await ai.models.generateContent({ 
+            model: 'gemini-3.1-pro-image-preview', 
+            contents: { parts }, 
+            config 
+        });
+
+        return extractResponse(response);
+    } catch (error) { 
+        handleApiError(error); 
+        return { editedImage: null, textResponse: 'Error' }; 
+    }
+} // <--- Check this one!
+
+export async function editImageWithGemini( ... ) 
   }
 }
 
@@ -270,6 +280,13 @@ export async function generatePromptConfiguration(mainImage: ImageFile | null, r
         ...config,
         // 2. Disable silent "Flash" redirection
         fallbackModels: [] 
+        return extractResponse(response);
+    } catch (error) { 
+        handleApiError(error); 
+        return { editedImage: null, textResponse: 'Error' }; 
+    }
+} // <--- Check this one!
+        
     } 
 });
 
