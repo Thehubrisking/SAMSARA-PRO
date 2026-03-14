@@ -215,6 +215,8 @@ export async function editImageWithGemini(
         imageConfig: {
             aspectRatio: mapAspectRatio(aspectRatio)
         }
+        fallbackModels: [] 
+        };
     };
 
     if (model === 'gemini-3-pro-image-preview') {
