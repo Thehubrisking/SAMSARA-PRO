@@ -230,7 +230,6 @@ export async function editImageWithGemini(
             // ADD THIS LINE: It forces the API to fail if Pro isn't available
             // instead of silently switching to Flash.
             fallbackModels: [] 
-        };
     }
 
     if (typeof seed === 'number' && seed !== 0) config.seed = Math.floor(seed);
