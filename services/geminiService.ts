@@ -8,7 +8,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
     if (!API_KEY) {
         throw new Error("VITE_GEMINI_API_KEY environment variable not set");
     }
-    return new GoogleGenAI({ apiKey: VITE_API_KEY });
+    return new GoogleGenAI({ apiKey: API_KEY });
 };
 
 const handleApiError = (error: unknown) => {
