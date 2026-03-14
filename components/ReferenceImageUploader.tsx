@@ -62,7 +62,7 @@ const BucketUploader = ({
             <div className="grid grid-cols-4 gap-2">
                 {bucket.images.map((img, idx) => (
                     <div key={idx} className="relative aspect-square rounded-md overflow-hidden group">
-                        <img src={img.dataUrl} className="w-full h-full object-cover" />
+                        {img?.dataUrl && <img src={img.dataUrl} className="w-full h-full object-cover" />}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                             <button onClick={() => {
                                 const next = [...bucket.images];

@@ -194,19 +194,19 @@ export const PromptInput: React.FC<PromptInputProps> = ({ value, onChange, zoneP
                                         <div className="grid grid-cols-1 gap-4">
                                             {/* Text Instruction for Zone */}
                                             <div className="flex flex-col gap-2">
-                                                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest pl-1">Neural Intent</span>
+                                                <span className="text-[8px] font-black text-dark-text/30 dark:text-white/20 uppercase tracking-widest pl-1">Neural Intent</span>
                                                 <textarea 
                                                     value={zData.text}
                                                     onChange={(e) => onZonePromptChange(zone.key, e.target.value)}
                                                     placeholder={`Instructions for the ${zone.key} region...`}
                                                     rows={2}
-                                                    className="w-full bg-black/30 rounded-xl p-3 text-xs text-white/70 outline-none resize-none border border-white/5 focus:border-brand-red/50 transition-colors leading-relaxed placeholder:text-white/10"
+                                                    className="w-full bg-black/5 dark:bg-black/30 rounded-xl p-3 text-xs text-dark-text dark:text-white/70 outline-none resize-none border border-dark-text/10 dark:border-white/5 focus:border-brand-red/50 transition-colors leading-relaxed placeholder:text-dark-text/20 dark:placeholder:text-white/10"
                                                 />
                                             </div>
 
                                             {/* Media Ref for Zone */}
                                             <div className="flex flex-col gap-2">
-                                                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest pl-1">Neural Blueprint</span>
+                                                <span className="text-[8px] font-black text-dark-text/30 dark:text-white/20 uppercase tracking-widest pl-1">Neural Blueprint</span>
                                                 <ZoneMediaUploader 
                                                     zone={zone.key} 
                                                     image={zData.image} 

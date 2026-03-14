@@ -81,9 +81,16 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
             </span>
           );
       }
+      if (entry.model === 'gemini-3.1-flash-image-preview') {
+        return (
+            <span className="bg-white/10 backdrop-blur-md text-brand-red text-[8px] font-black px-2 py-0.5 rounded-full border border-brand-red/20 shadow-sm tracking-wider uppercase">
+                Pro 2
+            </span>
+          );
+      }
       return (
         <span className="bg-white/10 backdrop-blur-md text-white/60 text-[8px] font-black px-2 py-0.5 rounded-full border border-white/5 shadow-sm tracking-wider uppercase">
-            Flash
+            Legacy
         </span>
       );
   }

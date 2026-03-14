@@ -410,8 +410,8 @@ const InputField = ({
                         className="absolute right-0 top-0 bottom-0 w-8 opacity-0 cursor-pointer"
                         value=""
                     >
-                        <option value="" disabled>Select option</option>
-                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        <option value="" disabled className="bg-light-card dark:bg-dark-card text-dark-text dark:text-light-text">Select option</option>
+                        {options.map(opt => <option key={opt} value={opt} className="bg-light-card dark:bg-dark-card text-dark-text dark:text-light-text">{opt}</option>)}
                     </select>
                 </>
             )}

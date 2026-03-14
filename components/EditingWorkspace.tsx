@@ -429,8 +429,8 @@ export const EditingWorkspace: React.FC<EditingWorkspaceProps> = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className={`flex items-center gap-3 bg-black/20 px-3 py-1.5 rounded-md border border-white/5 transition-opacity ${editSubMode === 'global' ? 'opacity-30 pointer-events-none' : ''}`}>
-                            <span className="text-[8px] font-black uppercase text-white/30 tracking-widest">Brush Size</span>
+                        <div className={`flex items-center gap-3 bg-black/5 dark:bg-black/20 px-3 py-1.5 rounded-md border border-dark-text/5 dark:border-white/5 transition-opacity ${editSubMode === 'global' ? 'opacity-30 pointer-events-none' : ''}`}>
+                            <span className="text-[8px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest">Brush Size</span>
                             <input type="range" min="1" max="250" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} className="w-32 accent-brand-red" />
                             <span className="text-[10px] font-mono text-brand-red font-bold w-8">{brushSize}</span>
                         </div>
@@ -485,10 +485,10 @@ export const EditingWorkspace: React.FC<EditingWorkspaceProps> = ({
         </div>
 
         <div className={`p-3 border-t border-light-border dark:border-dark-border bg-white dark:bg-dark-card flex items-center justify-between z-[100010] flex-shrink-0 ${isFullScreen ? 'sticky bottom-0' : ''}`}>
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-md border border-white/5">
-                <button onClick={() => setScale(s => Math.max(MIN_SCALE, s / 1.5))} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-gray-500"><ZoomOutIcon className="w-4 h-4"/></button>
-                <button onClick={() => setScale(s => Math.min(MAX_SCALE, s * 1.5))} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-gray-500"><ZoomInIcon className="w-4 h-4"/></button>
-                <button onClick={resetView} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-gray-500"><RefreshIcon className="w-4 h-4"/></button>
+            <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-md border border-dark-text/5 dark:border-white/5">
+                <button onClick={() => setScale(s => Math.max(MIN_SCALE, s / 1.5))} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-medium-text dark:text-gray-500"><ZoomOutIcon className="w-4 h-4"/></button>
+                <button onClick={() => setScale(s => Math.min(MAX_SCALE, s * 1.5))} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-medium-text dark:text-gray-500"><ZoomInIcon className="w-4 h-4"/></button>
+                <button onClick={resetView} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md text-medium-text dark:text-gray-500"><RefreshIcon className="w-4 h-4"/></button>
             </div>
             <div className="flex items-center gap-3">
                 {editSubMode === 'global' ? (
@@ -502,8 +502,8 @@ export const EditingWorkspace: React.FC<EditingWorkspaceProps> = ({
                         <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Markings Locked & Detected</span>
                     </div>
                 )}
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Orbit: [Space] + Drag • Zoom: Scroll</span>
-                <div className="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
+                <span className="text-[8px] font-black text-medium-text dark:text-gray-400 uppercase tracking-widest">Orbit: [Space] + Drag • Zoom: Scroll</span>
+                <div className="w-px h-4 bg-gray-300 dark:bg-gray-700"></div>
                 <span className="text-[10px] font-mono text-brand-red font-bold bg-brand-red/10 px-2 py-0.5 rounded-md">{Math.round(scale * 100)}%</span>
             </div>
         </div>
