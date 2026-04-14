@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { ReferenceImageUploader } from './components/ReferenceImageUploader';
@@ -94,7 +94,7 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [isRepositoryModalOpen, setIsRepositoryModalOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget>('avatar');
-  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3-pro-image-preview');
+  const [imageModel, setImageModel] = useState<ImageModel>('gemini-3.1-flash-image-preview');
   const [safetyLevel, setSafetyLevel] = useState<SafetyLevel>('BLOCK_MEDIUM_AND_ABOVE');
   const [resolution, setResolution] = useState<ImageResolution>('1K');
   const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>('1:1');
@@ -278,6 +278,46 @@ export default function App() {
       return allRefs;
   };
 
+  const imageLabels = useMemo(() => {
+    const labels: Map<string, string> = new Map();
+    const images: { file: ImageFile, label: string, type: string }[] = [];
+    
+    const mainTarget = mode === 'style' ? avatarImage : originalImage;
+    if (mainTarget) {
+      labels.set(mainTarget.dataUrl, '@0');
+      images.push({ file: mainTarget, label: '@0', type: mode === 'style' ? 'Main Model' : 'Base Image' });
+    }
+
+    let currentIdx = 1;
+    const basePool = mode === 'style' ? referenceImages : editReferenceImages;
+    
+    const addImages = (imgList: (ImageFile | null)[], type: string) => {
+      imgList.forEach(img => {
+        if (img && !labels.has(img.dataUrl)) {
+          const label = `@${currentIdx++}`;
+          labels.set(img.dataUrl, label);
+          images.push({ file: img, label, type });
+        }
+      });
+    };
+
+    addImages(basePool, 'Reference');
+    if (identityConfig.enabled) addImages([structureImage, textureImage], 'Identity');
+    if (garmentConfig.enabled) addImages(garmentImages, 'Garment');
+    if (poseLockConfig.enabled) addImages([poseLockImage], 'Pose');
+    if (sceneLockConfig.enabled) addImages([sceneLockImage], 'Scene');
+    if (isAdvancedUploads) {
+      (Object.values(advancedRefs) as any[]).forEach(bucket => {
+        if (bucket.enabled) addImages(bucket.images, bucket.name);
+      });
+    }
+    (Object.values(zonePrompts) as ZoneData[]).forEach(zone => {
+      if (zone.image) addImages([zone.image], 'Zone Reference');
+    });
+
+    return { labels, images };
+  }, [mode, avatarImage, originalImage, referenceImages, editReferenceImages, identityConfig, structureImage, textureImage, garmentConfig, garmentImages, poseLockConfig, poseLockImage, sceneLockConfig, sceneLockImage, isAdvancedUploads, advancedRefs, zonePrompts]);
+
   const constructFullPrompt = useCallback((
     userPrompt: string, 
     config: PromptConfig, 
@@ -382,6 +422,23 @@ export default function App() {
     }
 
     if (engineParts.length > 0) parts.push(`--- NEURAL ENGINE PARAMETERS ---\n${engineParts.join('\n')}`);
+
+    // Add Reference Key for contextual prompting
+    const hasMask = (mode === 'edit' && editSubMode === 'mask') || (mode === 'style' && avatarImage?.maskDataUrl);
+    const refKeyParts = imageLabels.images.map((img, i) => {
+        // Map @n to Input N for Gemini
+        let inputIdx = 0;
+        if (i === 0) {
+            inputIdx = 0;
+        } else {
+            inputIdx = i + (hasMask ? 1 : 0);
+        }
+        return `${img.label} (Input ${inputIdx}): ${img.type}`;
+    });
+
+    parts.push(`--- REFERENCE KEY ---\nYou can refer to images using @n tags in your prompt.
+The model will map these to the following inputs:
+${refKeyParts.join('\n')}`);
 
     parts.push(`[GLOBAL ASPECT RATIO]: ${aspectRatio}`);
 
@@ -584,8 +641,8 @@ export default function App() {
     const projectState = {
       mode, editSubMode, prompt, zonePrompts, imageModel, safetyLevel, resolution, aspectRatio,
       promptConfig, identityConfig, garmentConfig, poseLockConfig, sceneLockConfig, realismConfig,
-      originalImage, avatarImage, referenceImages: mode === 'edit' ? editReferenceImages : referenceImages,
-      structureImage, textureImage, garmentImages, poseLockImage, sceneLockImage, timestamp: Date.now()
+      originalImage, maskImage, avatarImage, referenceImages: mode === 'edit' ? editReferenceImages : referenceImages,
+      structureImage, textureImage, garmentImages, poseLockImage, sceneLockImage, advancedRefs, timestamp: Date.now()
     };
     const blob = new Blob([JSON.stringify(projectState, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -625,11 +682,15 @@ export default function App() {
           setMarkupHistory([{
             id: Date.now(),
             image: state.originalImage,
-            mask: null,
+            mask: state.maskImage || null,
             timestamp: Date.now()
           }]);
         }
-        if (state.avatarImage) setAvatarImage(state.avatarImage);
+        if (state.maskImage) setMasterMaskImage(state.maskImage);
+        if (state.avatarImage) {
+          setAvatarImage(state.avatarImage);
+          setMasterAvatarImage(state.avatarImage);
+        }
         if (state.referenceImages) {
           if (state.mode === 'edit') setEditReferenceImages(state.referenceImages);
           else setReferenceImages(state.referenceImages);
@@ -639,6 +700,7 @@ export default function App() {
         if (state.garmentImages) setGarmentImages(state.garmentImages);
         if (state.poseLockImage) setPoseLockImage(state.poseLockImage);
         if (state.sceneLockImage) setSceneLockImage(state.sceneLockImage);
+        if (state.advancedRefs) setAdvancedRefs(state.advancedRefs);
         setEditedImage(null);
         setError(null);
       } catch (err) { setError("Failed to parse project file."); }
@@ -732,6 +794,7 @@ export default function App() {
                                         onAdvancedRefsChange={setAdvancedRefs} 
                                         isAdvanced={isAdvancedUploads} 
                                         onToggleAdvanced={setIsAdvancedUploads} 
+                                        labels={imageLabels.labels}
                                     />
                                 </div>
                             </div>
@@ -747,6 +810,7 @@ export default function App() {
                                     {!avatarImage ? <ImageUploader onImageUpload={(f) => handleInitialUpload(f, 'avatar')} /> : (
                                         <div className="relative group rounded-md overflow-hidden bg-neutral-100 dark:bg-black/20 border-[0.5px] border-dark-text/10 dark:border-white/10 aspect-[3/4] flex justify-center">
                                             <img src={avatarImage.dataUrl} className="h-full w-full object-cover" alt="Identity Preview" />
+                                            <div className="absolute top-2 left-2 bg-brand-red text-black text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-10">@0</div>
                                             <button onClick={() => setAvatarImage(null)} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 shadow-xl"><TrashIcon className="w-3.5 h-3.5"/></button>
                                         </div>
                                     )}
@@ -762,6 +826,7 @@ export default function App() {
                                         onAdvancedRefsChange={setAdvancedRefs} 
                                         isAdvanced={isAdvancedUploads} 
                                         onToggleAdvanced={setIsAdvancedUploads} 
+                                        labels={imageLabels.labels}
                                     />
                                 </div>
                             </div>
@@ -811,6 +876,7 @@ export default function App() {
           referenceImages={referenceImages.map(img => img?.dataUrl).filter(Boolean) as string[]} 
           onImageClick={(url) => setZoomedInfo({ url })} 
           onImageEdit={handleCommit} 
+          labels={imageLabels.labels}
         />
                                     {!editedImage && !isLoading && <div className="text-center opacity-5 p-4"><p className="text-[6vw] md:text-[3vw] font-light uppercase tracking-[2em] text-dark-text dark:text-white">Visualizing</p></div>}
                                 </div>
@@ -832,6 +898,7 @@ export default function App() {
                         onTextureCropRequest={handleTextureCropRequest} 
                         isOpen={isIdentityLockOpen} 
                         onToggle={() => { setIsIdentityLockOpen(!isIdentityLockOpen); setIsGarmentLockOpen(false); setIsPoseLockOpen(false); setIsSceneLockOpen(false); setIsRealismOpen(false); }} 
+                        labels={imageLabels.labels}
                     />
                     <GarmentLockPanel 
                         config={garmentConfig} 
@@ -841,6 +908,7 @@ export default function App() {
                         onGarmentCropRequest={handleGarmentCropRequest}
                         isOpen={isGarmentLockOpen} 
                         onToggle={() => { setIsGarmentLockOpen(!isGarmentLockOpen); setIsIdentityLockOpen(false); setIsPoseLockOpen(false); setIsSceneLockOpen(false); setIsRealismOpen(false); }} 
+                        labels={imageLabels.labels}
                     />
                     <PoseLockPanel
                         config={poseLockConfig}
@@ -850,6 +918,7 @@ export default function App() {
                         onPoseCropRequest={handlePoseCropRequest}
                         isOpen={isPoseLockOpen}
                         onToggle={() => { setIsPoseLockOpen(!isPoseLockOpen); setIsIdentityLockOpen(false); setIsGarmentLockOpen(false); setIsSceneLockOpen(false); setIsRealismOpen(false); }}
+                        labels={imageLabels.labels}
                     />
                     <span className="text-[10px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-[0.4em] mb-2 px-1">Consistency & Environmental Engines</span>
                     <SceneLockPanel 
@@ -860,6 +929,7 @@ export default function App() {
                         onSceneCropRequest={handleSceneCropRequest}
                         isOpen={isSceneLockOpen} 
                         onToggle={() => { setIsSceneLockOpen(!isSceneLockOpen); setIsIdentityLockOpen(false); setIsGarmentLockOpen(false); setIsPoseLockOpen(false); setIsRealismOpen(false); }} 
+                        labels={imageLabels.labels}
                     />
                 </div>
 
@@ -871,8 +941,8 @@ export default function App() {
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] font-black uppercase text-dark-text/30 dark:text-white/30 tracking-widest pl-1">Neural Core</span>
                                     <div className="flex bg-gray-100 dark:bg-black/30 p-1 rounded-lg border-[0.5px] border-gray-200 dark:border-white/5">
-                                        <button onClick={async () => { setImageModel('gemini-3-pro-image-preview'); if (resolution === '512px') setResolution('1K'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3-pro-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro</button>
-                                        <button onClick={async () => { setImageModel('gemini-3.1-flash-image-preview'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3.1-flash-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro 2</button>
+                                        <button onClick={async () => { setImageModel('gemini-3-pro-image-preview'); if (resolution === '512px') setResolution('1K'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3-pro-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro 1</button>
+                                        <button onClick={async () => { setImageModel('gemini-3.1-flash-image-preview'); await ensureApiKey(); }} className={`flex-1 text-[9px] font-black uppercase tracking-widest py-2.5 rounded-md transition-all ${imageModel === 'gemini-3.1-flash-image-preview' ? 'bg-white dark:bg-white/5 text-brand-red shadow-lg' : 'text-gray-400 dark:text-white/20 hover:text-dark-text dark:hover:text-white/60'}`}>Pro 2 (Ultra)</button>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
