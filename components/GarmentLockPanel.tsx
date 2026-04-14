@@ -11,6 +11,7 @@ interface GarmentLockPanelProps {
   onGarmentCropRequest: (index: number) => void;
   isOpen: boolean;
   onToggle: () => void;
+  labels: Map<string, string>;
 }
 
 const SliderControl = ({ label, value, onChange, min, max, step }: { label: string, value: number, onChange: (v: number) => void, min: number, max: number, step: number }) => (
@@ -46,7 +47,8 @@ const ToggleControl = ({ label, checked, onChange }: { label: string, checked: b
 export const GarmentLockPanel: React.FC<GarmentLockPanelProps> = ({ 
     config, onConfigChange, 
     garmentImages, onGarmentImagesChange, onGarmentCropRequest,
-    isOpen, onToggle 
+    isOpen, onToggle,
+    labels
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,6 +123,11 @@ export const GarmentLockPanel: React.FC<GarmentLockPanelProps> = ({
                                  {garmentImages.map((img, idx) => (
                                      <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-light-border dark:border-dark-border bg-black/20 shadow-sm">
                                          <img src={img.dataUrl} alt={`Garment ${idx}`} className="w-full h-full object-cover" />
+                                         {img.dataUrl && labels.has(img.dataUrl) && (
+                                             <div className="absolute top-2 left-2 bg-brand-red text-black text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-10">
+                                                 {labels.get(img.dataUrl)}
+                                             </div>
+                                         )}
                                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                             <button 
                                                 onClick={() => onGarmentCropRequest(idx)}

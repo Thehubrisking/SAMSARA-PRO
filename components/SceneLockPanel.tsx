@@ -11,6 +11,7 @@ interface SceneLockPanelProps {
   onSceneCropRequest: () => void;
   isOpen: boolean;
   onToggle: () => void;
+  labels: Map<string, string>;
 }
 
 const SliderControl = ({ label, value, onChange, min, max, step }: { label: string, value: number, onChange: (v: number) => void, min: number, max: number, step: number }) => (
@@ -46,7 +47,8 @@ const ToggleControl = ({ label, checked, onChange }: { label: string, checked: b
 export const SceneLockPanel: React.FC<SceneLockPanelProps> = ({ 
     config, onConfigChange, 
     sceneLockImage, onSceneLockImageChange, onSceneCropRequest,
-    isOpen, onToggle 
+    isOpen, onToggle,
+    labels
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +105,11 @@ export const SceneLockPanel: React.FC<SceneLockPanelProps> = ({
                              {sceneLockImage ? (
                                  <div className="relative group w-full h-40 rounded-lg overflow-hidden border border-light-border dark:border-dark-border bg-black/20">
                                      <img src={sceneLockImage.dataUrl} alt="Scene" className="w-full h-full object-cover" />
+                                     {sceneLockImage.dataUrl && labels.has(sceneLockImage.dataUrl) && (
+                                         <div className="absolute top-2 left-2 bg-brand-red text-black text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-10">
+                                             {labels.get(sceneLockImage.dataUrl)}
+                                         </div>
+                                     )}
                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button 
                                             onClick={onSceneCropRequest}

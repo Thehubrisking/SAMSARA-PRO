@@ -12,6 +12,7 @@ interface ReferenceImageUploaderProps {
   onAdvancedRefsChange: (state: AdvancedReferencesState) => void;
   isAdvanced: boolean;
   onToggleAdvanced: (val: boolean) => void;
+  labels: Map<string, string>;
 }
 
 const BucketUploader = ({ 
@@ -19,13 +20,15 @@ const BucketUploader = ({
     bucket, 
     onUpdate, 
     onCropBucket, 
-    onEditBucket 
+    onEditBucket,
+    labels
 }: { 
     label: string, 
     bucket: { enabled: boolean, images: ImageFile[] }, 
     onUpdate: (enabled: boolean, images: ImageFile[]) => void,
     onCropBucket: (idx: number) => void,
-    onEditBucket: (idx: number) => void
+    onEditBucket: (idx: number) => void,
+    labels: Map<string, string>
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +66,11 @@ const BucketUploader = ({
                 {bucket.images.map((img, idx) => (
                     <div key={idx} className="relative aspect-square rounded-md overflow-hidden group">
                         {img?.dataUrl && <img src={img.dataUrl} className="w-full h-full object-cover" />}
+                        {img?.dataUrl && labels.has(img.dataUrl) && (
+                            <div className="absolute top-1 left-1 bg-brand-red text-black text-[8px] font-black px-1.5 py-0.5 rounded shadow-md z-10">
+                                {labels.get(img.dataUrl)}
+                            </div>
+                        )}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                             <button onClick={() => {
                                 const next = [...bucket.images];
@@ -92,7 +100,8 @@ export const ReferenceImageUploader: React.FC<ReferenceImageUploaderProps> = ({
     advancedRefs,
     onAdvancedRefsChange,
     isAdvanced,
-    onToggleAdvanced
+    onToggleAdvanced,
+    labels
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,6 +161,11 @@ export const ReferenceImageUploader: React.FC<ReferenceImageUploaderProps> = ({
                 {referenceImages.map((image, index) => (
                     <div key={index} className="relative group aspect-square rounded-lg overflow-hidden shadow-sm">
                     <img src={image.dataUrl} className="w-full h-full object-cover bg-gray-100 dark:bg-dark-subtle-bg" />
+                    {image.dataUrl && labels.has(image.dataUrl) && (
+                        <div className="absolute top-1.5 left-1.5 bg-brand-red text-black text-[9px] font-black px-2 py-0.5 rounded shadow-md z-10">
+                            {labels.get(image.dataUrl)}
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
                         <button onClick={() => onCropRequest(index)} className="p-1.5 bg-black/40 text-white rounded-full hover:bg-brand-red"><CropIcon className="w-4 h-4"/></button>
                         <button onClick={() => onEditRequest(index)} className="p-1.5 bg-black/40 text-white rounded-full hover:bg-brand-red"><SelectionIcon className="w-4 h-4"/></button>
@@ -164,14 +178,14 @@ export const ReferenceImageUploader: React.FC<ReferenceImageUploaderProps> = ({
         </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 animate-in fade-in zoom-in-95 duration-300">
-            <BucketUploader label="Hair Reference" bucket={advancedRefs.hair} onUpdate={(e, i) => updateBucket('hair', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Nails Reference" bucket={advancedRefs.nails} onUpdate={(e, i) => updateBucket('nails', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Makeup Reference" bucket={advancedRefs.makeup} onUpdate={(e, i) => updateBucket('makeup', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Jewelry Reference" bucket={advancedRefs.jewelry} onUpdate={(e, i) => updateBucket('jewelry', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Garment Details" bucket={advancedRefs.details} onUpdate={(e, i) => updateBucket('details', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Shoes Reference" bucket={advancedRefs.shoes} onUpdate={(e, i) => updateBucket('shoes', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Multi-Angle Ref" bucket={advancedRefs.multiAngle} onUpdate={(e, i) => updateBucket('multiAngle', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
-            <BucketUploader label="Other Accessories" bucket={advancedRefs.other} onUpdate={(e, i) => updateBucket('other', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} />
+            <BucketUploader label="Hair Reference" bucket={advancedRefs.hair} onUpdate={(e, i) => updateBucket('hair', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Nails Reference" bucket={advancedRefs.nails} onUpdate={(e, i) => updateBucket('nails', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Makeup Reference" bucket={advancedRefs.makeup} onUpdate={(e, i) => updateBucket('makeup', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Jewelry Reference" bucket={advancedRefs.jewelry} onUpdate={(e, i) => updateBucket('jewelry', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Garment Details" bucket={advancedRefs.details} onUpdate={(e, i) => updateBucket('details', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Shoes Reference" bucket={advancedRefs.shoes} onUpdate={(e, i) => updateBucket('shoes', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Multi-Angle Ref" bucket={advancedRefs.multiAngle} onUpdate={(e, i) => updateBucket('multiAngle', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
+            <BucketUploader label="Other Accessories" bucket={advancedRefs.other} onUpdate={(e, i) => updateBucket('other', e, i)} onCropBucket={() => {}} onEditBucket={() => {}} labels={labels} />
         </div>
       )}
     </div>

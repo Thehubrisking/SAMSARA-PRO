@@ -13,6 +13,7 @@ interface ImageDisplayProps {
   onImageCrop?: () => void;
   onImageEdit?: (url: string) => void;
   onImageUpscale?: () => void;
+  labels?: Map<string, string>;
 }
 
 interface ImageCardProps {
@@ -24,9 +25,10 @@ interface ImageCardProps {
         label: string;
         onClick: (e: React.MouseEvent) => void;
     }>;
+    tag?: string;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ src, label, className = '', actions }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ src, label, className = '', actions, tag }) => {
     const zoomAction = actions?.find(action => action.label === "Zoom In");
 
     return (
@@ -43,6 +45,11 @@ const ImageCard: React.FC<ImageCardProps> = ({ src, label, className = '', actio
                     className="w-full h-full object-contain select-none" 
                     onContextMenu={(e) => e.preventDefault()}
                 />
+                {tag && (
+                    <div className="absolute top-4 left-4 bg-brand-red text-black text-xs font-black px-3 py-1 rounded shadow-[0_0_20px_rgba(246,239,18,0.4)] z-10">
+                        {tag}
+                    </div>
+                )}
                 {actions && actions.length > 0 && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                         {actions.map(action => (
@@ -73,6 +80,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
     onImageCrop,
     onImageEdit,
     onImageUpscale,
+    labels
 }) => {
   const stylizedImageActions = editedImageUrl && [
     { 
@@ -109,15 +117,15 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
 
   // Fallback views for inputs before generation
   if (sceneImageUrl) {
-      return <ImageCard src={sceneImageUrl} label="Global Scene" />;
+      return <ImageCard src={sceneImageUrl} label="Global Scene" tag={labels?.get(sceneImageUrl)} />;
   }
 
   if (avatarUrl) {
-      return <ImageCard src={avatarUrl} label="Target Identity" />;
+      return <ImageCard src={avatarUrl} label="Target Identity" tag={labels?.get(avatarUrl)} />;
   }
 
   if (originalImageUrl) {
-      return <ImageCard src={originalImageUrl} label="Original Canvas" />;
+      return <ImageCard src={originalImageUrl} label="Original Canvas" tag={labels?.get(originalImageUrl)} />;
   }
 
   return null;

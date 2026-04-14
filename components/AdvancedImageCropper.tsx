@@ -371,7 +371,7 @@ export const AdvancedImageCropper: React.FC<AdvancedImageCropperProps> = ({ imag
       sourceHeight
     );
 
-    onSave(cropCanvas.toDataURL(mimeType, 0.9));
+    onSave(cropCanvas.toDataURL(mimeType, 1.0));
   };
 
   const handleFit = useCallback(() => {

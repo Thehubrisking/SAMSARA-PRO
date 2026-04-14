@@ -14,9 +14,10 @@ interface IdentityLockPanelProps {
   onTextureCropRequest: () => void;
   isOpen: boolean;
   onToggle: () => void;
+  labels: Map<string, string>;
 }
 
-const ImageUploaderCompact = ({ label, image, onChange, onCrop }: { label: string, image: ImageFile | null, onChange: (f: ImageFile | null) => void, onCrop?: () => void }) => {
+const ImageUploaderCompact = ({ label, image, onChange, onCrop, labels }: { label: string, image: ImageFile | null, onChange: (f: ImageFile | null) => void, onCrop?: () => void, labels: Map<string, string> }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,6 +39,11 @@ const ImageUploaderCompact = ({ label, image, onChange, onCrop }: { label: strin
             {image ? (
                 <div className="relative group w-full h-32 rounded-lg overflow-hidden border border-light-border dark:border-dark-border bg-gray-100 dark:bg-black/20">
                     <img src={image.dataUrl} alt={label} className="w-full h-full object-cover" />
+                    {image.dataUrl && labels.has(image.dataUrl) && (
+                        <div className="absolute top-2 left-2 bg-brand-red text-black text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-10">
+                            {labels.get(image.dataUrl)}
+                        </div>
+                    )}
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {onCrop && (
                             <button 
@@ -126,7 +132,8 @@ export const IdentityLockPanel: React.FC<IdentityLockPanelProps> = ({
     config, onConfigChange, 
     structureImage, onStructureImageChange, onStructureCropRequest,
     textureImage, onTextureImageChange, onTextureCropRequest,
-    isOpen, onToggle 
+    isOpen, onToggle,
+    labels
 }) => {
   
   const updateConfig = (key: keyof IdentityLockConfig, value: any) => {
@@ -177,12 +184,14 @@ export const IdentityLockPanel: React.FC<IdentityLockPanelProps> = ({
                                 image={structureImage} 
                                 onChange={onStructureImageChange}
                                 onCrop={onStructureCropRequest}
+                                labels={labels}
                             />
                             <ImageUploaderCompact 
                                 label="Texture Ref (Input B)" 
                                 image={textureImage} 
                                 onChange={onTextureImageChange} 
                                 onCrop={onTextureCropRequest}
+                                labels={labels}
                             />
                         </div>
 
